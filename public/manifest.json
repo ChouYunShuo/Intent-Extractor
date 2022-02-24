@@ -1,0 +1,25 @@
+{
+    "manifest_version": 2,
+    "name": "Virtual Assistant Chrome Automation Extension",
+    "version": "1.0",
+    "permissions": [
+        "storage",
+        "webNavigation",
+        "tabs",
+        "<all_urls>"
+        
+    ],
+    "browser_action": {
+        "default_icon": "images/icon-black.png",
+        "default_title": "Task Automation",
+        "default_popup": "popup.html"
+    },
+    "content_scripts":[{
+        "matches":["<all_urls>"],
+        "js": ["content.js"]
+    }],
+    "background": {
+        "scripts": [ "background.js" ]
+      }
+
+}
