@@ -35,7 +35,8 @@ function getPermission() {
     });
 };
 function searchYoutube(temp) {
-    var gapikey = 'AIzaSyBQmUVBobuFuUPfjr2fKjehE1eA6PvOCMk';
+    
+    var gapikey = process.env.gapikey;
     var q = temp;
     $.get(
         "https://www.googleapis.com/youtube/v3/search", {
@@ -54,6 +55,7 @@ function searchYoutube(temp) {
                 return false;
             });
         });
+    
 }
 function Speech(say) {
     if ('speechSynthesis' in window ) {
