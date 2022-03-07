@@ -1,5 +1,8 @@
 const pname = "projects"
+const autoname = "autoRecording"
+const tempname = "tempAutoResult"
 const idmap = "ids"
+
 const getStorageData = key =>
   new Promise((resolve, reject) =>
     chrome.storage.local.get(key, result =>
@@ -28,6 +31,7 @@ async function saveState(items) {
     await setStorageData(result);
 }
 
+
 async function addAction(groupId, subItemId, action) {
     
     const groups = await load();
@@ -39,7 +43,7 @@ async function addAction(groupId, subItemId, action) {
     if (!subItem || !subItem.actions)
       return false;
   
-    const {actions} = subItem;
+    let {actions} = subItem;
     if (Array.isArray(action)){
       actions.push(action[0],action[1]);
     }else{
@@ -53,17 +57,18 @@ async function addAction(groupId, subItemId, action) {
 async function getActions(groupId, subItemId){
     const groups = await load();
     const [group] = groups.filter(({id}) => id === groupId);
+   
     if (!group)
       return null;
-  
+    
     const [subItem] = group.subItems.filter(({id}) => id === subItemId);
     if (!subItem || !subItem.actions)
       return null;
-  
+    
     const {actions} = subItem;
     return actions
 }
-async function createProject(groupText, groupId,projectText,projectId){
+async function createProject(groupText, groupId, projectText,projectId){
     
     const groups = await load();
     const [group] = groups.filter(({id}) => id === groupId);
@@ -96,4 +101,39 @@ async function createProject(groupText, groupId,projectText,projectId){
     
 }
 
-export {getStorageData,setStorageData,load,saveState,addAction,createProject,getActions,pname,idmap}
+async function renameProject(groupId,projectId, projectText){
+  
+    const groups = await load();
+    const [group] = groups.filter(({id}) => id === groupId);
+   
+    if (!group)
+      return null;
+      
+    const [subItem] = group.subItems.filter(({id}) => id === projectId);
+    if (!subItem )
+      return null;
+    subItem['text'] = projectText
+    
+    await saveState(groups);
+    
+    console.log("Project renamed to: "+projectText)
+    console.log(groups)
+}
+async function deleteProject(groupId,projectId){
+ 
+  const groups = await load();
+  const [group] = groups.filter(({id}) => id === groupId);
+  
+  if (!group)
+    return null;
+    
+  const newItems = group.subItems.filter(({id}) => id != projectId);
+  group['subItems'] = newItems
+  
+  await saveState(groups);
+  
+  console.log("Project: "+projectId+" removed!")
+  console.log(groups)
+}
+
+export {getStorageData,setStorageData,load,saveState,addAction,createProject,getActions,renameProject,deleteProject,pname,idmap,autoname,tempname}

@@ -1,9 +1,11 @@
 const path = require('path')
 var webpack = require('webpack');
+
 const HtmlWebpackPlugin =  require('html-webpack-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 
 module.exports = {
+    
     entry: {
         popup: './src/popup/popup.jsx',
         content: './src/content/content.js',
@@ -14,6 +16,7 @@ module.exports = {
         path: path.join(__dirname, 'build'),
         filename: '[name].js'
     },
+    
     module: {
         rules: [
           {
@@ -39,13 +42,15 @@ module.exports = {
             test: /\.css$/,
             include: /src/,
             use: [
-              'style-loader',
+              'style-loader', // last, inject css to the dom
               {
-                loader: 'css-loader',
-              }
+                loader: 'css-loader', options: { importLoaders: 1}
+              },
+              'postcss-loader'
             ]
           }
     ]},
+    
     plugins: [
         new HtmlWebpackPlugin({
           template: './src/popup/popup.html',

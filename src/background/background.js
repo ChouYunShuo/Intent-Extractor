@@ -1,18 +1,40 @@
-import {getStorageData,setStorageData,addAction,pname,getActions,createProject} from "../db/project";
+import {getStorageData,setStorageData,addAction,pname,getActions,createProject,autoname,tempname} from "../db/project";
+
 import {Controller} from "./controller"
+import {autoExtract} from "./extractor"
 import {playProject} from "./actions"
 import {getPermission,searchYoutube,Speech } from "./voice"
 window.controller = new Controller()
+
 window.controller.recordButtonClick = recordButtonClick
 window.controller.stopButtonClick = stopButtonClick
 window.controller.playButtonClick = playButtonClick
 window.controller.clearButtonClick = clearButtonClick
+window.controller.voiceButtonClick = voiceButtonClick
+window.controller.autoRecordButtonClick = autoRecordButtonClick
+window.controller.voiceInput = ''
 
 let lasturl = null
 let tabcnt = null
-let cur_newtab = false
+
+
 async function isFirstLoad(){
     const database = await getStorageData(pname)
+
+    const isbgRecording = await getStorageData(autoname)
+    const tempEvents = await getStorageData(tempname)
+
+    if (isbgRecording === true){
+        controller.autoEventsArray = tempEvents
+        controller.isAutoRecording = true
+
+        const result = {};
+        result[tempname] = [];
+        await setStorageData(result);
+
+    }else{
+        controller.isAutoRecording = false
+    }
 
     if(!Object.keys(database).length){
         const dbItem = {};
@@ -49,26 +71,26 @@ async function isFirstLoad(){
 }
 
 
-chrome.runtime.onConnect.addListener((port) => {
-    console.assert(port.name === "recordPort");
+chrome.runtime.onConnect.addListener(function (port) {
     port.onMessage.addListener(async(msg) => {
-        
-        if(controller.allowRec) {
-            //console.log(msg)
+        if(controller.allowRec || controller.isAutoRecording) {
             const {type, url} = msg 
             chrome.tabs.getAllInWindow(null, function(tabs){
-                console.log(tabs.length, tabcnt)
+                //console.log(tabs.length, tabcnt)
 
                 if ((type === 'click'|| type === 'change')  &&tabcnt && tabs.length != tabcnt){ // && tabcnt && tabs.length!= tabcnt
-                    console.log({msgType: "RecordedEvent", type:"redirect", inputs:[url,""]},msg)
-                    storeRecord([{msgType: "RecordedEvent", type:"redirect", inputs:[url,""]},msg])//cur_newtab = true
+                    //console.log({msgType: "RecordedEvent", type:"redirect", inputs:[url,""]},msg)
+                    const time1 = new Date()
+                    const time2 = new Date()
+                    msg['time'] = time2
+                    storeRecord([{msgType: "RecordedEvent", type:"redirect", inputs:[url,""], time: time1 },msg])//cur_newtab = true
                 }else{
-                    console.log(msg)
+                    //console.log(msg)
+                    const time2 = new Date()
+                    msg['time'] = time2
                     storeRecord(msg)
                 }
-                    
-                
-                
+
                 lasturl = url             
                 tabcnt =  tabs.length;   
             });
@@ -79,27 +101,68 @@ chrome.runtime.onConnect.addListener((port) => {
 chrome.webNavigation.onCommitted.addListener(({transitionQualifiers, url})=>{
    
     if (transitionQualifiers.includes('from_address_bar')) {
-        if(controller.allowRec) {
-            console.log({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""]})
-            storeRecord({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""]})
+        if(controller.allowRec || controller.isAutoRecording) {
+            const time1 = new Date()
+            //console.log({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""], time:time1})
+            storeRecord({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""], time:time1})
             lasturl = url
         }
     }
 });
 
-function storeRecord(msg) {
-     addAction(controller.recordingGroupId, controller.recordingProjectId, msg);
+chrome.windows.onRemoved.addListener(async ()=> {
+    if (controller.isAutoRecording){
+        const result = {};
+        result[tempname] = controller.autoEventsArray;
+        await setStorageData(result);
+    }
     
+})
+chrome.downloads.onCreated.addListener(()=>{
+    if(controller.isAutoRecording){
+        console.log("file Downloaded!")
+        const time1 = new Date()
+        storeRecord({msgType: "RecordedEvent", type:"download", inputs:["",""], time:time1})
+    }
+    
+})
+function storeRecord(msg) {
+    
+    if(controller.allowRec){
+        if (Array.isArray(msg)){
+            for (let i = 0; i < msg.length; i++) {
+                delete msg[i].time
+                delete msg[i].text
+                delete msg[i].title
+            }
+        }else{
+            delete msg.time
+            delete msg.text
+            delete msg.title
+        }
+        console.log(msg)
+        
+        addAction(controller.recordingGroupId, controller.recordingProjectId, msg);
+        return
+    }
+    console.log(msg)
+
+    if (Array.isArray(msg)){
+        controller.autoEventsArray.push(msg[0],msg[1])
+    }else
+    controller.autoEventsArray.push(msg)
 }
 
 async function storeCurrentUrl() {
     chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
         if(tabs.length){
             const url = tabs[0].url 
+            const time1 = new Date()
             storeRecord({
                 msgType: "RecordedEvent",
                 type: "redirect",
-                inputs: [url, ""]
+                inputs: [url, ""],
+                time: time1
             });
         }
         
@@ -124,42 +187,75 @@ async function checkProjectExisted(groupId, projectId){
         return false
     }
 }
-async function recordButtonClick(groupId, projectId) {
+async function recordButtonClick(groupText, groupId,projectText,projectId) {
     const isexisted = await checkProjectExisted(groupId, projectId)
     if (isexisted===false){
-        await createProject("test",groupId,"testp",projectId)
+        await createProject(groupText,groupId,projectText,projectId)
     }
     chrome.tabs.getAllInWindow(null, function(tabs){   
         tabcnt =  tabs.length;   
     });
-    //console.log(tabcnt)
-    controller.record(groupId, projectId);
+   
+    //
+    //const result = {};
+    //result['allowRec'] = true;
+    //await setStorageData(result);
+
+    controller.record(projectText, groupId, projectId);
     await storeCurrentUrl();
     chrome.browserAction.setBadgeText({"text": "rec"});
     
 }
+
+async function autoRecordButtonClick(){
+
+    if(controller.isAutoRecording){ //stop AutoRecording
+        console.log("Stop bg recording")
+        controller.stop();
+        autoExtract(controller.autoEventsArray)
+
+        const result = {};
+        result[autoname] = false;
+        await setStorageData(result);
+        
+        //console.log(controller.autoEventsArray)
+
+       
+    }else{ //startAutoRecording()
+        console.log("Start bg recording")
+        const result = {};
+        result[autoname] = true;
+        await setStorageData(result);
+        controller.autoRecord()
+    }
+
+}
+
 async function stopButtonClick() {
     controller.stop();
     chrome.browserAction.setBadgeText({"text": ""});
+
+    //const result = {};
+    //result['allowRec'] = false;
+    //await setStorageData(result);
 
     const groups = await getStorageData(pname);
     console.log(groups)
     //clearDB()
 }
 
-async function playButtonClick(){
+async function playButtonClick(groupId,projectId){
     const groups = await getStorageData(pname);
-    console.log(groups)
-    const groupId= 2
-    const projectId  = 2
-    const actions = await getActions(groupId, projectId)
+    //console.log(groups,projectId)
     
+    const actions = await getActions(groupId, projectId)
+    console.log(actions)
     if (actions){
         chrome.tabs.create({"url":"https://baidu.com","selected":true}, async tab =>{
             chrome.tabs.onUpdated.addListener(function listener (tabId, info) {
                 if (info.status === 'complete' && tabId === tab.id) {
                     chrome.tabs.onUpdated.removeListener(listener);
-                    controller.setProject(actions,projectId, tab.id)
+                    controller.setProject(actions, projectId, tab.id)
                     console.log("start playing...")
                     playProject()
                 }
@@ -177,7 +273,7 @@ async function clearButtonClick(){
     dbItem[pname] = [
         {
             id: 1,
-            text: "group",
+            text: "official",
             type: "group",
             expanded: false,
             subItems: [
@@ -193,6 +289,9 @@ async function clearButtonClick(){
     
     await setStorageData(dbItem) 
 }
+async function voiceButtonClick(){
+    startRecognition()
+}
 
 function startRecognition(){
     const recognition = new webkitSpeechRecognition();
@@ -201,7 +300,7 @@ function startRecognition(){
     
     let final_transcript = '';
     recognition.onstart = function(event) {
-        
+        console.log("Start Recognition")
     };
     recognition.onresult = function(event) {
         for (var i = event.resultIndex; i < event.results.length; ++i) {
@@ -209,17 +308,32 @@ function startRecognition(){
                 final_transcript += event.results[i][0].transcript;
             } 
         }
-        console.log(final_transcript)
-        return tasks(final_transcript)
+        
+        //tasks(final_transcript)
         
     };
     recognition.onend = function() {
         recognition.stop();
-        startRecognition();
+        console.log(final_transcript)
+
+        let message = {"type": "voiceinput" ,"content": final_transcript};
+        messagePopup(message) 
+        //startRecognition();
     }
     recognition.lang = "zh-Hans-CN"; //zh-Hans-CN en-US zh-Hans-TW 
     recognition.start();
 }
+
+async function messagePopup(message){
+    
+    return new Promise(resolve => {
+        chrome.runtime.sendMessage(message, async (response) => { 
+            console.log(response)
+            resolve()
+        });
+    });
+}
+
 
 function tasks(input){
     if (input.includes('百度搜索')){
@@ -239,8 +353,6 @@ function tasks(input){
             searchYoutube(query)
         }
         
-    }else if (input.includes('起床')){
-       
     }else if(input.includes('info')){
         playButtonClick()
     }
@@ -248,4 +360,3 @@ function tasks(input){
 }
 
 isFirstLoad();
-startRecognition()

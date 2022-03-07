@@ -1,4 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+body {
+  height:32rem;
+  width: 22rem;
+}
+
+.navbtn{
+  @apply p-1 cursor-pointer w-8 h-8 hover:scale-125;
+}
+
+.navtext{
+  @apply absolute invisible group-hover:visible bg-body rounded px-2  py-1  mt-1
+}
+.dropDownMenu{
+  @apply bg-body absolute rounded-xl pl-4 pr-4 py-4 -translate-x-32 z-20 border-2 border-nav;
+}
+@keyframes ping {
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/*
 * {
   box-sizing: border-box;
   margin: 0;
@@ -109,4 +135,4 @@ body {
 footer {
   margin-top: 30px;
   text-align: center;
-}
+}*/

@@ -1,17 +1,20 @@
 export class Controller{
     constructor(){
         this.allowRec = false;
+        this.isAutoRecording = false;
         this.allowPlay = 0;
         this.playingProjectId;
 
         this.recordingProjectId = null;
         this.recordingGroupId = null;
-
+        this.recordingProjectName = null
         this.instructArray;
         this.playingTabId = null;
         this.instruction;
         this.selectedProjectId;
         this.currentTab;
+
+        this.autoEventsArray;
     }
 
     setProject(actions, curProjectID,newTabId){
@@ -30,15 +33,24 @@ export class Controller{
 
     stop() {
         this.allowRec = false;
+        this.isAutoRecording = false
         this.allowPlay = 0;
         this.paused = 0;
     }
 
-    record(groupId, projectId) {
+    record(projectName,groupId, projectId) {
         this.recordingProjectId = projectId;
         this.recordingGroupId = groupId;
+        this.recordingProjectName = projectName
         this.allowRec = true;
     }
+    autoRecord(){
+        this.autoEventsArray = []
+        this.isAutoRecording = true
+    }
+   
+    
+    
 
     
 }

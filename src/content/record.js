@@ -20,7 +20,9 @@ function recordAction(target, actionsData){
           const inputs = [getActionDataValue(input1, closestTarget),
                           getActionDataValue(input2, closestTarget)];
           const url = window.location.href
-          return sendmsg(type, inputs,url);
+          const text = closestTarget.textContent.replace(/\s+/g, '')  //.trim() replace(/\s+/g, '')
+          const title = document.title.replace(/\s+/g, '')
+          return sendmsg(type, inputs,url , text,title);
         }
       }
 }
@@ -119,9 +121,9 @@ function getPath(element) {
     return path.length ? path.join(" > ") : false;
 }
 
-function sendmsg(type, inputs, url){
+function sendmsg(type, inputs, url,text,title){
      //console.log({msgType: "RecordedEvent", type, inputs})
-     port.postMessage({msgType: "RecordedEvent", type, inputs, url});
+     port.postMessage({msgType: "RecordedEvent", type, inputs, url,text,title});
      
 }
 

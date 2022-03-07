@@ -64,7 +64,8 @@ async function executeAction(instruction)
             break;
           }
           case "redirect": {
-            window.location = input1;
+            if (input1!='chrome://extensions/')
+              window.location = input1;
             break;
           }
           case "redirect_from_address_bar": {

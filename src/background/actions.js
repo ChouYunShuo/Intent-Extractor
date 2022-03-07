@@ -3,6 +3,7 @@ async function playProject(){
     if (controller.allowPlay === 0){
         return 
     }else if(controller.instructArray.length){
+       
         chrome.browserAction.setBadgeText({"text": "play"});
         const [instruction] = controller.instructArray.splice(0, 1);
         
@@ -65,11 +66,11 @@ async function messageContentScript(instruction,errorcnt)
             console.log(response)
             var seconds = (new Date()).getSeconds();
             console.log(seconds);
-            if(response.error && errorcnt === 0){
+            if(chrome.runtime.lastError || (response.error && errorcnt === 0)){
                 await timeout(3000)
                 await messageContentScript(instruction,1)
                 resolve()
-            }else
+            }else 
                 resolve()
         });
     });

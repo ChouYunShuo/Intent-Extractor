@@ -10,4 +10,4 @@ const Button =  ({ color, text , onclick}) => {
           {text}
         </button>) 
 }
-export default Button
+export default Button 
