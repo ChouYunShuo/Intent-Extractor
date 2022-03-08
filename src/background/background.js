@@ -12,15 +12,33 @@ window.controller.playButtonClick = playButtonClick
 window.controller.clearButtonClick = clearButtonClick
 window.controller.voiceButtonClick = voiceButtonClick
 window.controller.autoRecordButtonClick = autoRecordButtonClick
+window.controller.updateTextIdMap = updateTextIdMap
 window.controller.voiceInput = ''
 
 let lasturl = null
 let tabcnt = null
 
+function gettextIdMap(db){
+    //console.log(db.projects)
+    
+    if(Array.isArray(db.projects)){
+        let result = []
+        result.push({});
+        result.push({});
+        for(let index = 0; index < result.length; index++ ) {
+            db.projects[index].subItems.forEach(project => {
+                let key = project.text
+                let val = project.id
+                result[index][key]=  val
+            });
+        }
+        return result
+    }
+    return []
+}
 
 async function isFirstLoad(){
     const database = await getStorageData(pname)
-
     const isbgRecording = await getStorageData(autoname)
     const tempEvents = await getStorageData(tempname)
 
@@ -56,7 +74,11 @@ async function isFirstLoad(){
         ];
         
         await setStorageData(dbItem) 
+        
     }
+    controller.textIdMap = gettextIdMap(database)
+    //controller.querytask = []
+    //console.log(controller.textIdMap)
 
     chrome.storage.local.get( ["firsttime"], function(items2) {
         if (items2.firsttime === undefined || items2.firsttime === 2) {
@@ -69,6 +91,7 @@ async function isFirstLoad(){
     });
     
 }
+
 
 
 chrome.runtime.onConnect.addListener(function (port) {
@@ -190,7 +213,7 @@ async function checkProjectExisted(groupId, projectId){
 async function recordButtonClick(groupText, groupId,projectText,projectId) {
     const isexisted = await checkProjectExisted(groupId, projectId)
     if (isexisted===false){
-        await createProject(groupText,groupId,projectText,projectId)
+        await createProject(groupText,groupId,projectText,projectId,[])
     }
     chrome.tabs.getAllInWindow(null, function(tabs){   
         tabcnt =  tabs.length;   
@@ -239,8 +262,8 @@ async function stopButtonClick() {
     //result['allowRec'] = false;
     //await setStorageData(result);
 
-    const groups = await getStorageData(pname);
-    console.log(groups)
+    //const groups = await getStorageData(pname);
+    //console.log(groups)
     //clearDB()
 }
 
@@ -284,7 +307,21 @@ async function clearButtonClick(){
                 actions: []
             }
             ]
-        }
+        },
+        {
+            id: 2,
+            text: "auto_segment",
+            type: "group",
+            expanded: false,
+            subItems: [
+            {
+                id: 1,
+                text: "project",
+                type: "project",
+                actions: []
+            }
+            ]
+        },
     ];
     
     await setStorageData(dbItem) 
@@ -308,22 +345,48 @@ function startRecognition(){
                 final_transcript += event.results[i][0].transcript;
             } 
         }
-        
         //tasks(final_transcript)
-        
     };
     recognition.onend = function() {
         recognition.stop();
         console.log(final_transcript)
+        let text = final_transcript.replace(/[\s]+/g, '') 
 
-        let message = {"type": "voiceinput" ,"content": final_transcript};
+        let message = {"type": "voiceinput" ,"content": text};
         messagePopup(message) 
+        searchText("dingleberry")
         //startRecognition();
     }
     recognition.lang = "zh-Hans-CN"; //zh-Hans-CN en-US zh-Hans-TW 
     recognition.start();
 }
-
+function searchText(text){
+   
+    let official = Object.keys(controller.textIdMap[0])
+    controller.querytask = []
+    //console.log(text,official)
+    for(let i=0; i<official.length;i++){
+        let text = official[i]
+        controller.querytask.push({gid:1,pid:controller.textIdMap[0][text], text:text})
+    }
+   /* if (official.includes(text)){
+        console.log(controller.textIdMap[0][text],text)
+        controller.querytask = [{gid:1,pid:controller.textIdMap[0][text], text:text}]
+        return
+    }*/
+}
+async function updateTextIdMap(){
+    const database = await getStorageData(pname)
+    console.log(database)
+    controller.textIdMap = gettextIdMap(database)
+    let official = Object.keys(controller.textIdMap[0])
+    controller.querytask = []
+    //console.log(text,official)
+    for(let i=0; i<official.length;i++){
+        let text = official[i]
+        controller.querytask.push({gid:1,pid:controller.textIdMap[0][text], text:text})
+    }
+}
 async function messagePopup(message){
     
     return new Promise(resolve => {
@@ -360,3 +423,13 @@ function tasks(input){
 }
 
 isFirstLoad();
+
+/*
+$.ajax({ 
+    type: "POST",
+    data: '{"words":"清华大学网络学堂大数据金融"}',
+    url: "https://intentextractor.herokuapp.com/segment",
+    success: function(data){        
+      console.log(data);
+    }
+ });*/

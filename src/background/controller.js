@@ -15,6 +15,8 @@ export class Controller{
         this.currentTab;
 
         this.autoEventsArray;
+        this.textIdMap;
+        this.querytask = [];
     }
 
     setProject(actions, curProjectID,newTabId){
@@ -48,7 +50,8 @@ export class Controller{
         this.autoEventsArray = []
         this.isAutoRecording = true
     }
-   
+    
+    
     
     
 

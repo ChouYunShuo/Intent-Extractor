@@ -1,7 +1,4 @@
 //window.SpeechRecognition = new webkitSpeechRecognition();
-
-
-
 function getPermission() {
     var oldTabID;
     chrome.tabs.query({
