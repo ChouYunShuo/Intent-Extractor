@@ -68,7 +68,7 @@ async function getActions(groupId, subItemId){
     const {actions} = subItem;
     return actions
 }
-async function createProject(groupText, groupId, projectText,projectId){
+async function createProject(groupText, groupId, projectText,projectId,actions){
     
     const groups = await load();
     const [group] = groups.filter(({id}) => id === groupId);
@@ -77,7 +77,7 @@ async function createProject(groupText, groupId, projectText,projectId){
             id: projectId,
             text: projectText,
             type: "project",
-            actions: []
+            actions: actions
         });
     }
     else{
@@ -90,7 +90,7 @@ async function createProject(groupText, groupId, projectText,projectId){
                 id: projectId,
                 text: projectText,
                 type: "project",
-                actions: []
+                actions: actions
             }]
         })
     }

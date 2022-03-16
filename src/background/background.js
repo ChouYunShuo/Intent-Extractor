@@ -1,4 +1,4 @@
-import {getStorageData,setStorageData,addAction,pname,getActions,createProject,autoname,tempname} from "../db/project";
+import {load,getStorageData,setStorageData,addAction,pname,getActions,createProject,autoname,tempname} from "../db/project";
 
 import {Controller} from "./controller"
 import {autoExtract} from "./extractor"
@@ -41,9 +41,10 @@ async function isFirstLoad(){
     const database = await getStorageData(pname)
     const isbgRecording = await getStorageData(autoname)
     const tempEvents = await getStorageData(tempname)
+    console.log(database)
 
-    if (isbgRecording === true){
-        controller.autoEventsArray = tempEvents
+    if (isbgRecording[autoname] === true){
+        controller.autoEventsArray = tempEvents[tempname]
         controller.isAutoRecording = true
 
         const result = {};
@@ -105,12 +106,12 @@ chrome.runtime.onConnect.addListener(function (port) {
                     //console.log({msgType: "RecordedEvent", type:"redirect", inputs:[url,""]},msg)
                     const time1 = new Date()
                     const time2 = new Date()
-                    msg['time'] = time2
-                    storeRecord([{msgType: "RecordedEvent", type:"redirect", inputs:[url,""], time: time1 },msg])//cur_newtab = true
+                    msg['time'] = time2.toString()
+                    storeRecord([{msgType: "RecordedEvent", type:"redirect", inputs:[url,""], time: time1.toString() },msg])//cur_newtab = true
                 }else{
                     //console.log(msg)
                     const time2 = new Date()
-                    msg['time'] = time2
+                    msg['time'] = time2.toString()
                     storeRecord(msg)
                 }
 
@@ -127,7 +128,7 @@ chrome.webNavigation.onCommitted.addListener(({transitionQualifiers, url})=>{
         if(controller.allowRec || controller.isAutoRecording) {
             const time1 = new Date()
             //console.log({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""], time:time1})
-            storeRecord({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""], time:time1})
+            storeRecord({msgType: "RecordedEvent", type:"redirect_from_address_bar", inputs:[url,""], time:time1.toString()})
             lasturl = url
         }
     }
@@ -137,6 +138,7 @@ chrome.windows.onRemoved.addListener(async ()=> {
     if (controller.isAutoRecording){
         const result = {};
         result[tempname] = controller.autoEventsArray;
+        console.log(controller.autoEventsArray)
         await setStorageData(result);
     }
     
@@ -145,7 +147,7 @@ chrome.downloads.onCreated.addListener(()=>{
     if(controller.isAutoRecording){
         console.log("file Downloaded!")
         const time1 = new Date()
-        storeRecord({msgType: "RecordedEvent", type:"download", inputs:["",""], time:time1})
+        storeRecord({msgType: "RecordedEvent", type:"download", inputs:["",""], time:time1.toString()})
     }
     
 })
@@ -169,7 +171,7 @@ function storeRecord(msg) {
         return
     }
     console.log(msg)
-
+    
     if (Array.isArray(msg)){
         controller.autoEventsArray.push(msg[0],msg[1])
     }else
@@ -240,7 +242,7 @@ async function autoRecordButtonClick(){
         const result = {};
         result[autoname] = false;
         await setStorageData(result);
-        
+        updateTextIdMap()
         //console.log(controller.autoEventsArray)
 
        
@@ -258,6 +260,7 @@ async function stopButtonClick() {
     controller.stop();
     chrome.browserAction.setBadgeText({"text": ""});
 
+    updateTextIdMap()
     //const result = {};
     //result['allowRec'] = false;
     //await setStorageData(result);
@@ -268,7 +271,7 @@ async function stopButtonClick() {
 }
 
 async function playButtonClick(groupId,projectId){
-    const groups = await getStorageData(pname);
+    //const groups = await getStorageData(pname);
     //console.log(groups,projectId)
     
     const actions = await getActions(groupId, projectId)
@@ -353,23 +356,23 @@ function startRecognition(){
         let text = final_transcript.replace(/[\s]+/g, '') 
 
         let message = {"type": "voiceinput" ,"content": text};
+        controller.recogtext= text
         messagePopup(message) 
-        searchText("dingleberry")
+        searchText(text)
         //startRecognition();
     }
     recognition.lang = "zh-Hans-CN"; //zh-Hans-CN en-US zh-Hans-TW 
     recognition.start();
 }
 function searchText(text){
-   
-    let official = Object.keys(controller.textIdMap[0])
+    let autosegment = Object.keys(controller.textIdMap[0])
     controller.querytask = []
     //console.log(text,official)
-    for(let i=0; i<official.length;i++){
-        let text = official[i]
+    for(let i=0; i<autosegment.length;i++){
+        let text = autosegment[i]
         controller.querytask.push({gid:1,pid:controller.textIdMap[0][text], text:text})
     }
-   /* if (official.includes(text)){
+    /*if (official.includes(text)){
         console.log(controller.textIdMap[0][text],text)
         controller.querytask = [{gid:1,pid:controller.textIdMap[0][text], text:text}]
         return
@@ -377,15 +380,11 @@ function searchText(text){
 }
 async function updateTextIdMap(){
     const database = await getStorageData(pname)
-    console.log(database)
+    //console.log(database)
     controller.textIdMap = gettextIdMap(database)
-    let official = Object.keys(controller.textIdMap[0])
     controller.querytask = []
-    //console.log(text,official)
-    for(let i=0; i<official.length;i++){
-        let text = official[i]
-        controller.querytask.push({gid:1,pid:controller.textIdMap[0][text], text:text})
-    }
+    searchText(controller.recogtext)
+    
 }
 async function messagePopup(message){
     

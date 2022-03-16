@@ -16,7 +16,6 @@ module.exports = {
         path: path.join(__dirname, 'build'),
         filename: '[name].js'
     },
-    
     module: {
         rules: [
           {
@@ -73,3 +72,12 @@ module.exports = {
       })
     ]
 }
+
+/*resolve: {
+      fallback: {
+        fs: false, util:false, path:false, crypto:false, assert:false,
+        buffer:false, os:false, stream:false, url:false, zlib:false,
+        https:false, http:false, timers:false, tls:false, net:false,
+        constants:false, child_process:false,
+      }
+    }, */

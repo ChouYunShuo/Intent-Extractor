@@ -11,8 +11,6 @@ const AddTaskModal = ({showModal, setshowModal, inputname, setinputname, bgrecor
         bgrecord('official',1,inputname,pid)
         setshowModal(false)
         setrecording(true)
-        
-    
     }
 
     const closeModal = e=>{

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 async function autoExtract(events){
    
     console.log("start auto Extraction")
-
+    console.log(events)
     let lasttime = events[0].time
     let lastTitle = ''
     let cur_keywords = ''
@@ -21,6 +21,7 @@ async function autoExtract(events){
             cur_keywords+=element.title
             lastTitle = element.title
         }
+        //console.log(element.text, element.title)
     }
     const updateTask = (element)=>{
         if(element.type ==='download'){
@@ -35,12 +36,15 @@ async function autoExtract(events){
         const element = events[index]
 
         if(interval > 1 && element.type === 'redirect_from_address_bar'){ // segmentation condition 
-           
-            let response = await getSegment(cur_keywords)
+            let removeEngKeyword = cur_keywords.replace(/[\w]+/g, '')
+            let response = await getSegment(removeEngKeyword)
             const result = JSON.parse(response).result
+           
             if(isdownload){
                 result+=',下载'
             }
+            console.log(result)
+            console.log(cur_task)
             extractionStorage(result,cur_task)
 
             cur_keywords = ''
@@ -53,14 +57,16 @@ async function autoExtract(events){
         updateText(element)
         
     }
-
-    console.log(cur_keywords)
-    let response = await getSegment(cur_keywords)
+    let removeEngKeyword = cur_keywords.replace(/[\w]+/g, '')
+    
+    let response = await getSegment(removeEngKeyword)
     const result = JSON.parse(response).result
 
+    //console.log(removeEngKeyword)
     console.log(result)
     console.log(cur_task)
     extractionStorage(result,cur_task)
+    console.log("End auto Extraction")
 
 }
 async function getSegment(text){
@@ -81,7 +87,9 @@ async function getSegment(text){
     })
 }
 function getInterval(time1, time2){
-    return (time1.getTime()-time2.getTime())/(1000*60)
+    let t1 = Date.parse(time1)
+    let t2 = Date.parse(time2)
+    return (t1-t2)/(1000*60)
 }
                           
 async function extractionStorage(projectText,action){

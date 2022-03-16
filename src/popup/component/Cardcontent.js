@@ -6,7 +6,7 @@ const Cardcontent = ({id,text,playevent,updateStorage})=>{
     const [opemRenameModal, setOpenRenameModal] = useState(false)
     const [openDeleteModal, setOpenDeleteModal] = useState(false)
     const [taskname, setTaskName] = useState(text)
-
+    const [isDelete, setIsDelete] = useState(false)
     const modalRef = useRef()
     const [dropDownMenuOverflow,setDropDownMenuOverflow] = useState(false)
     
@@ -15,7 +15,7 @@ const Cardcontent = ({id,text,playevent,updateStorage})=>{
         modalRef.current.getBoundingClientRect().bottom>365? setDropDownMenuOverflow(true) : setDropDownMenuOverflow(false) 
     }
     return(
-        
+        isDelete?null:
         <div className='relative cursor-pointer'>
             <div ref = {modalRef}  className='flex justify-between items-center bg-input h-24 self-stretch mx-6 p-4 rounded-3xl text-stone-200 hover:border-2 hover:border-input-border text-base'>
             {taskname}
@@ -41,11 +41,9 @@ const Cardcontent = ({id,text,playevent,updateStorage})=>{
                 </div>
             </div>
             {opemRenameModal?<RenameTask setshowModal = {setOpenRenameModal} renameProject = {updateStorage} setTaskName = {setTaskName} id = {id}/>:null}
-            {openDeleteModal?<DeleteTask setshowModal = {setOpenDeleteModal} deleteProject = {updateStorage} id = {id} name ={taskname}/>:null}
+            {openDeleteModal?<DeleteTask setshowModal = {setOpenDeleteModal} deleteProject = {updateStorage} id = {id} name ={taskname} setIsDelete = {setIsDelete}/>:null}
         </div>
-        
-       
-        
+
     )
 }
 
@@ -81,7 +79,7 @@ function DropDownMenu({setOpenRenameModal,setOpenDeleteModal,setOpenMenu,dropDow
     )
 }
 
-function DeleteTask({setshowModal,id, deleteProject,name}){
+function DeleteTask({setshowModal,id, deleteProject,name,setIsDelete}){
     const modalRef = useRef()
     
     const closeModal = e=>{
@@ -104,6 +102,7 @@ function DeleteTask({setshowModal,id, deleteProject,name}){
                         <button onClick={()=>{setshowModal(false)}} className="bg-secondary w-28 h-10 rounded hover:bg-[#6f6f87]" >Cancel</button>
                         <button onClick={ ()=>{
                             setshowModal(false)
+                            setIsDelete(true)
                             deleteProject('delete',[id[0],id[1]])}        
                         } className="bg-red-500 w-28 h-10 rounded hover:bg-red-600">Confirm</button>
                     </div>

@@ -19,6 +19,8 @@ module.exports = {
         'poppins': ["'Poppins'", 'sans-serif']
       },
       visibility: ["group-hover"],
+    
+      
     },
   },
   plugins: [],

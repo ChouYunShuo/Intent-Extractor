@@ -9,6 +9,7 @@ import AddTaskModal from './component/Modal/AddModal';
 import AutoRecModal from './component/Modal/BgRecModal'
 
 import Recording from './component/Recording';
+import Bodybg from './component/Bodybg';
 
 const bg = chrome.extension.getBackgroundPage().controller;
 const App = () => {
@@ -20,18 +21,15 @@ const App = () => {
     const [recording, setrecording] = useState(bg.allowRec)
     const [showAutoRecModal, setshowAutoRecModal] = useState(false) // show auto record modal
     const [autoRecording, setAutoRecording] = useState(bg.isAutoRecording)
-    const [targetEvents, settargetEvent ] = useState([])
+    const [targetEvents, settargetEvent] = useState(bg.querytask)
+    
 
-    const cards = [{gid:1,pid:"26e8c9dc-ccea-4b75-a585-f8010753c302", text:'tesst'},
+    /*const cards = [{gid:1,pid:"dc96ee32-6a40-41f3-ae0b-67da141af45c", text:'12306test'},
                     {gid:1,pid:"04e3e5b6-cc6b-4914-8a4b-f5518217175a", text:'dinglebell'},
                     {gid:1,pid:'f8ff101e-3917-4ffd-8c5f-a145f718e32a',text:'dingleVPN' },
-                    {gid:1,pid:'fc3caf83-a27e-441f-96cf-717a69177c2b',text:'dingleVPN' },
-                    {gid:1,pid:'f18a0e89-f771-436d-ad89-bb3dc1512da0',text:'dingleVPN' },
-                    {gid:1,pid:'48c148cd-f6dd-4cc6-81e1-ee8cc167adca',text:'dingleVPN' },
-                    {gid:1,pid:'28334247-fa13-46c5-bae1-24914169bdd4',text:'dingleVPN' },
-                    {gid:1,pid:'f8ff101e-3917-4ffd-8c5f-a145f718e32a',text:'dingleVPN' }]
+                    {gid:1,pid:'a49c5c2c-af58-46eb-977a-52b373d6eb03',text:'test123' },]*/
     
-    const cardsmap = cards.map(({gid,pid,text})=>
+    const cardsmap = targetEvents.map(({gid,pid,text})=>
                         <Cardcontent key={pid} id ={[gid,pid]} text={text} playevent={bg.playButtonClick}
                                     updateStorage = {updateStorage} />)
 
@@ -57,7 +55,6 @@ const App = () => {
         }
         setEvents(groups)
     }
-        
 
     useEffect(()=>{
         chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>{
@@ -66,6 +63,7 @@ const App = () => {
                 setVoiceinputs(request.content)
                 setVoiceButtonClicked(false)
                 sendResponse({complete: true});
+                settargetEvent(bg.querytask)
               }
               catch(e) {
                 sendResponse({complete: true, error: e.name + ': ' + e.message});
@@ -86,12 +84,15 @@ const App = () => {
     return (
         recording ?
         <Recording recordingProjectName={inputname}
-        stopRecording = {bg.stopButtonClick} setrecording = {setrecording}/> : 
+        stopRecording = { bg.stopButtonClick} setrecording = {setrecording}/> : 
         <>
             <Navbar addTask = {openAddModal} autoRecord = {openAutoRecModal} isAutoRecording = {autoRecording} />
-            <div className="relative overflow-auto h-96 -mt-10 flex flex-col justify-start gap-2 z-10">
-                {cardsmap}
-            </div>
+            {targetEvents.length>0 ?
+                <div className="relative overflow-auto h-96 -mt-10 flex flex-col justify-start gap-2 z-10">
+                    {cardsmap}
+                </div>:<Bodybg/>
+            }
+    
            
             <VoiceFooter
                 onclick = {async ()=>{
@@ -113,18 +114,18 @@ const App = () => {
         </>
        
     )
-
 }
 
 async function updateStorage(type, msg){
-    console.log(type, msg)
+    //console.log(type, msg)
     if(type === 'rename'){
         await renameProject(msg[0],msg[1],msg[2])
+        bg.updateTextIdMap()
         
     }
     if (type === 'delete'){
         await deleteProject(msg[0],msg[1])
-
+        bg.updateTextIdMap()
     }
 }
 export default App

@@ -11,7 +11,7 @@
         
     ],
     "browser_action": {
-        "default_icon": "images/icon-black.png",
+        "default_icon": "images/icon-ai.png",
         "default_title": "Task Automation",
         "default_popup": "popup.html"
     },
@@ -20,7 +20,12 @@
         "js": ["content.js"]
     }],
     "background": {
-        "scripts": [ "background.js" ]
-      }
-
+        "scripts": [ "background.js"]
+    },
+    "icons": { 
+        "16": "images/icon-ai_16.png",
+        "48": "images/icon-ai_48.png",
+       "128": "images/icon-ai_128.png" }
+    
 }
+

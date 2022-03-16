@@ -14,6 +14,7 @@ export class Controller{
         this.selectedProjectId;
         this.currentTab;
 
+        this.recogtext = ''
         this.autoEventsArray;
         this.textIdMap;
         this.querytask = [];
