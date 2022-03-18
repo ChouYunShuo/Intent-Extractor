@@ -17,7 +17,7 @@ const Cardcontent = ({id,text,playevent,updateStorage})=>{
     return(
         isDelete?null:
         <div className='relative cursor-pointer'>
-            <div ref = {modalRef}  className='flex justify-between items-center bg-input h-24 self-stretch mx-6 p-4 rounded-3xl text-stone-200 hover:border-2 hover:border-input-border text-base'>
+            <div ref = {modalRef}  className='flex justify-between items-center bg-input h-24 self-stretch mx-12 p-6 rounded-3xl text-stone-200 hover:border-2 hover:border-input-border text-base'>
             {taskname}
                 <div className='pr-2 flex items-center gap-2'>
                     <div onClick={()=>{ playevent(id[0],id[1])}} >

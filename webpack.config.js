@@ -10,7 +10,9 @@ module.exports = {
         popup: './src/popup/popup.jsx',
         content: './src/content/content.js',
         background: './src/background/background.js',
-        permission: './src/permission/permission.jsx'
+        permission: './src/permission/permission.jsx',
+        injectforeground: './src/content/foreground/injectforeground.jsx',
+        foreground: './src/content/foreground/foreground.jsx'
     },
     output: {
         path: path.join(__dirname, 'build'),
@@ -60,10 +62,15 @@ module.exports = {
           template: './src/permission/permission.html',
           filename: 'permission.html',
           chunks: ['permission']
+        }), 
+        new HtmlWebpackPlugin({
+          template: './src/content/foreground/foreground.html',
+          filename: 'foreground.html',
+          chunks: ['foreground']
         }),
         new CopyPlugin({
           patterns: [
-            {from: 'public'}
+            {from: 'public'},
           ]
         }), 
         new webpack.ProvidePlugin({
@@ -72,12 +79,3 @@ module.exports = {
       })
     ]
 }
-
-/*resolve: {
-      fallback: {
-        fs: false, util:false, path:false, crypto:false, assert:false,
-        buffer:false, os:false, stream:false, url:false, zlib:false,
-        https:false, http:false, timers:false, tls:false, net:false,
-        constants:false, child_process:false,
-      }
-    }, */

@@ -96,4 +96,6 @@ async function extractionStorage(projectText,action){
     const pid = uuidv4() 
     await createProject("", 2, projectText,pid,action)
 }
+
+
 export {autoExtract}

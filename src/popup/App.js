@@ -21,7 +21,7 @@ const App = () => {
     const [recording, setrecording] = useState(bg.allowRec)
     const [showAutoRecModal, setshowAutoRecModal] = useState(false) // show auto record modal
     const [autoRecording, setAutoRecording] = useState(bg.isAutoRecording)
-    const [targetEvents, settargetEvent] = useState(bg.querytask)
+    const [targetEvents, settargetEvent] = useState([])
     
 
     /*const cards = [{gid:1,pid:"dc96ee32-6a40-41f3-ae0b-67da141af45c", text:'12306test'},
@@ -38,7 +38,7 @@ const App = () => {
           await fetchMessages()
         }
         getData()
-        
+        settargetEvent([])
       }, [])
 
     // Fetch data from chrome storage
@@ -56,6 +56,7 @@ const App = () => {
         setEvents(groups)
     }
 
+
     useEffect(()=>{
         chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>{
             if(request.type == "voiceinput") {
@@ -63,7 +64,7 @@ const App = () => {
                 setVoiceinputs(request.content)
                 setVoiceButtonClicked(false)
                 sendResponse({complete: true});
-                settargetEvent(bg.querytask)
+                
               }
               catch(e) {
                 sendResponse({complete: true, error: e.name + ': ' + e.message});
@@ -79,6 +80,10 @@ const App = () => {
     const openAutoRecModal = ()=>{
         setshowAutoRecModal(cur=>!cur)
     }
+    const showAllTasks = async () =>{
+        await bg.getAllOfficial()
+        settargetEvent(bg.querytask)
+    }
 
   
     return (
@@ -86,7 +91,7 @@ const App = () => {
         <Recording recordingProjectName={inputname}
         stopRecording = { bg.stopButtonClick} setrecording = {setrecording}/> : 
         <>
-            <Navbar addTask = {openAddModal} autoRecord = {openAutoRecModal} isAutoRecording = {autoRecording} />
+            <Navbar addTask = {openAddModal} autoRecord = {openAutoRecModal} showTask = {showAllTasks} isAutoRecording = {autoRecording} />
             {targetEvents.length>0 ?
                 <div className="relative overflow-auto h-96 -mt-10 flex flex-col justify-start gap-2 z-10">
                     {cardsmap}
@@ -94,21 +99,12 @@ const App = () => {
             }
     
            
-            <VoiceFooter
-                onclick = {async ()=>{
-                    await bg.voiceButtonClick()
-                    setTimeout(()=>{
-                        setVoiceButtonClicked(true)
-                    },1000)
-                }}
-                voicetext = {Voiceinputs}
-                isclicked = {VoiceButtonClicked}
-            />
+            
             <AddTaskModal showModal= {showAddModal} setshowModal = {setshowAddModal} 
                    inputname = {inputname} setinputname = {setinputname}
                    bgrecord = {bg.recordButtonClick} setrecording = {setrecording}>
             </AddTaskModal>
-            <AutoRecModal showModal= {showAutoRecModal} setshowModal = {setshowAutoRecModal} 
+            <AutoRecModal showModal= {showAutoRecModal} setshowModal = {setshowAutoRecModal} autoEventsArray = {bg.autoEventsArray}
                 bgrecord = {bg.autoRecordButtonClick} isAutoRecording = {autoRecording} setrecording = {setAutoRecording}>
             </AutoRecModal>
         </>
@@ -129,7 +125,18 @@ async function updateStorage(type, msg){
     }
 }
 export default App
-
+/*
+<VoiceFooter
+                onclick = {async ()=>{
+                    await bg.voiceButtonClick()
+                    setTimeout(()=>{
+                        setVoiceButtonClicked(true)
+                    },1000)
+                }}
+                voicetext = {Voiceinputs}
+                isclicked = {VoiceButtonClicked}
+            />
+*/
 
 /*
  <Cardcontent/>
